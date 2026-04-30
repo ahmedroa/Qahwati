@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "819133994826",
+    "project_id": "qahwati-ffe45",
+    "storage_bucket": "qahwati-ffe45.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:819133994826:android:7be7c7dfbb0f2ed7d353b3",
+        "android_client_info": {
+          "package_name": "com.example.qahwati"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4PNOH92ZfZE53WsxxAkMY0Wkg9SZ3Lu0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
