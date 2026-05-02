@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,6 +21,7 @@ class _LoginState extends State<Login> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -91,7 +93,21 @@ class _LoginState extends State<Login> {
                   ),
                 ),
                 verticalSpace(32),
-                MainButton(text: 'تسجيل الدخول', onTap: _goNext),
+                MainButton(
+                  text: _isLoading ? '' : 'تسجيل الدخول',
+                  onTap: _isLoading ? null : _login,
+                  color: ColorsManager.coffeeButton,
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 22.h,
+                          width: 22.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : null,
+                ),
                 verticalSpace(20),
                 _buildDividerSection(),
                 verticalSpace(20),
@@ -154,7 +170,7 @@ class _LoginState extends State<Login> {
                   .font14GrayRegular
                   .copyWith(color: ColorsManager.coffeeButton),
             ),
-          ),Qahwati
+          ),
         ),
         verticalSpace(16),
         Row(
@@ -201,10 +217,60 @@ class _LoginState extends State<Login> {
     );
   }
 
-  void _goNext() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const LocationScreen()),
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('يرجى تعبئة جميع الحقول');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LocationScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showError(_authErrorMessage(e.code));
+    } catch (_) {
+      _showError('حدث خطأ، حاول مجدداً');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _authErrorMessage(String code) {
+    switch (code) {
+      case 'user-not-found':
+      case 'invalid-credential':
+        return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      case 'invalid-email':
+        return 'البريد الإلكتروني غير صحيح';
+      case 'user-disabled':
+        return 'هذا الحساب موقوف';
+      case 'too-many-requests':
+        return 'محاولات كثيرة، حاول لاحقاً';
+      default:
+        return 'حدث خطأ، حاول مجدداً';
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: ColorsManager.coffeeButton,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+      ),
     );
   }
 }

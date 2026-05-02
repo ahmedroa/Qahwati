@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,6 +23,7 @@ class _RegistrState extends State<Registr> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -91,7 +94,21 @@ class _RegistrState extends State<Registr> {
                   ),
                 ),
                 verticalSpace(32),
-                MainButton(text: 'إضافة الحساب', onTap: _goNext),
+                MainButton(
+                  text: _isLoading ? '' : 'إضافة الحساب',
+                  onTap: _isLoading ? null : _register,
+                  color: ColorsManager.coffeeButton,
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 22.h,
+                          width: 22.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : null,
+                ),
                 verticalSpace(20),
                 _buildDividerSection(),
                 verticalSpace(20),
@@ -201,10 +218,70 @@ class _RegistrState extends State<Registr> {
     );
   }
 
-  void _goNext() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const LocationScreen()),
+  Future<void> _register() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      _showError('يرجى تعبئة جميع الحقول');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+        'uid': credential.user!.uid,
+        'name': name,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await credential.user!.updateDisplayName(name);
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LocationScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showError(_authErrorMessage(e.code));
+    } catch (_) {
+      _showError('حدث خطأ، حاول مجدداً');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _authErrorMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'البريد الإلكتروني مستخدم بالفعل';
+      case 'invalid-email':
+        return 'البريد الإلكتروني غير صحيح';
+      case 'weak-password':
+        return 'كلمة المرور ضعيفة، استخدم 6 أحرف أو أكثر';
+      default:
+        return 'حدث خطأ، حاول مجدداً';
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: ColorsManager.coffeeButton,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+      ),
     );
   }
 }

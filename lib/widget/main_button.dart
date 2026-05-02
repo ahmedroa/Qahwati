@@ -11,16 +11,18 @@ class MainButton extends StatelessWidget {
   final Color? color;
   final Color? textColor;
   final bool outlined;
+  final Widget? child;
 
   const MainButton({
     super.key,
-    required this.text,
+    this.text = '',
     this.onTap,
     this.width,
     this.height,
     this.color,
     this.textColor,
     this.outlined = false,
+    this.child,
   });
 
   @override
@@ -37,13 +39,14 @@ class MainButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(100.r),
         ),
         alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyles(context).font16BlackRegular.copyWith(
-                color: textColor ?? Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
+        child: child ??
+            Text(
+              text,
+              style: TextStyles(context).font16BlackRegular.copyWith(
+                    color: textColor ?? Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
       ),
     );
   }
