@@ -8,6 +8,7 @@ import 'package:qahwati/core/helpers/spacing.dart';
 import 'package:qahwati/core/theme/text_style.dart';
 import 'package:qahwati/login.dart';
 import 'package:qahwati/screens/location_screen.dart';
+import 'package:qahwati/screens/privacy_policy_screen.dart';
 import 'package:qahwati/widget/app_text_form_field.dart';
 import 'package:qahwati/widget/main_button.dart';
 
@@ -40,82 +41,90 @@ class _RegistrState extends State<Registr> {
       body: Directionality(
         textDirection: TextDirection.rtl,
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                verticalSpace(28),
-                Center(child: SvgPicture.asset('img/logo.svg', height: 72.h)),
-                verticalSpace(32),
-                _buildLabeledField(
-                  'اسم المستخدم',
-                  hintText: 'أدخل اسم المستخدم',
-                  controller: _nameController,
-                  prefixIcon: Icon(
-                    Icons.person_outline_rounded,
-                    color: ColorsManager.gray,
-                    size: 18.sp,
-                  ),
-                ),
-                verticalSpace(14),
-                _buildLabeledField(
-                  'البريد الإلكتروني أو الهاتف',
-                  hintText: 'أدخل البريد أو رقم الهاتف',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: ColorsManager.gray,
-                    size: 18.sp,
-                  ),
-                ),
-                verticalSpace(14),
-                _buildLabeledField(
-                  'كلمة المرور',
-                  hintText: 'أدخل كلمة المرور',
-                  controller: _passwordController,
-                  isObscure: true,
-                  prefixIcon: Icon(
-                    Icons.lock_outline_rounded,
-                    color: ColorsManager.gray,
-                    size: 18.sp,
-                  ),
-                  suffixIcon: GestureDetector(
-                    onTap: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                    child: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: ColorsManager.gray,
-                      size: 18.sp,
-                    ),
-                  ),
-                ),
-                verticalSpace(32),
-                MainButton(
-                  text: _isLoading ? '' : 'إضافة الحساب',
-                  onTap: _isLoading ? null : _register,
-                  color: ColorsManager.coffeeButton,
-                  child: _isLoading
-                      ? SizedBox(
-                          height: 22.h,
-                          width: 22.h,
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      verticalSpace(28),
+                      Center(
+                          child:
+                              SvgPicture.asset('img/logo.svg', height: 72.h)),
+                      verticalSpace(32),
+                      _buildLabeledField(
+                        'اسم المستخدم',
+                        hintText: 'أدخل اسم المستخدم',
+                        controller: _nameController,
+                        prefixIcon: Icon(
+                          Icons.person_outline_rounded,
+                          color: ColorsManager.gray,
+                          size: 18.sp,
+                        ),
+                      ),
+                      verticalSpace(14),
+                      _buildLabeledField(
+                        'البريد الإلكتروني أو الهاتف',
+                        hintText: 'أدخل البريد أو رقم الهاتف',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: ColorsManager.gray,
+                          size: 18.sp,
+                        ),
+                      ),
+                      verticalSpace(14),
+                      _buildLabeledField(
+                        'كلمة المرور',
+                        hintText: 'أدخل كلمة المرور',
+                        controller: _passwordController,
+                        isObscure: true,
+                        prefixIcon: Icon(
+                          Icons.lock_outline_rounded,
+                          color: ColorsManager.gray,
+                          size: 18.sp,
+                        ),
+                        suffixIcon: GestureDetector(
+                          onTap: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
+                          child: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: ColorsManager.gray,
+                            size: 18.sp,
                           ),
-                        )
-                      : null,
+                        ),
+                      ),
+                      verticalSpace(32),
+                      MainButton(
+                        text: _isLoading ? '' : 'إضافة الحساب',
+                        onTap: _isLoading ? null : _register,
+                        color: ColorsManager.coffeeButton,
+                        child: _isLoading
+                            ? SizedBox(
+                                height: 22.h,
+                                width: 22.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : null,
+                      ),
+                      verticalSpace(20),
+                      _buildDividerSection(),
+                      verticalSpace(16),
+                      // _buildSocialButtons(),
+                    ],
+                  ),
                 ),
-                verticalSpace(20),
-                _buildDividerSection(),
-                verticalSpace(20),
-                _buildSocialButtons(),
-                verticalSpace(32),
-              ],
-            ),
+              ),
+              _buildTermsText(),
+            ],
           ),
         ),
       ),
@@ -185,15 +194,52 @@ class _RegistrState extends State<Registr> {
           ],
         ),
         verticalSpace(16),
-        Center(
-          child: Text(
-            'يمكنك إستخدام',
-            style: TextStyles(
-              context,
-            ).font14GrayRegular.copyWith(color: ColorsManager.coffeeButton),
-          ),
-        ),
+        // Center(
+        //   child: Text(
+        //     'يمكنك إستخدام',
+        //     style: TextStyles(
+        //       context,
+        //     ).font14GrayRegular.copyWith(color: ColorsManager.coffeeButton),
+        //   ),
+        // ),
       ],
+    );
+  }
+
+  Widget _buildTermsText() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h, top: 8.h),
+      child: RichText(
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.rtl,
+        text: TextSpan(
+          style: TextStyles(context).font12GraykRegular.copyWith(
+                color: ColorsManager.gray,
+              ),
+          children: [
+            const TextSpan(text: 'بإنشاء حسابك، أنت توافق على '),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PrivacyPolicyScreen()),
+                ),
+                child: Text(
+                  'سياسة الخصوصية',
+                  style: TextStyles(context).font12GraykRegular.copyWith(
+                        color: ColorsManager.coffeeButton,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: ColorsManager.coffeeButton,
+                      ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -238,16 +284,16 @@ class _RegistrState extends State<Registr> {
           .collection('users')
           .doc(credential.user!.uid)
           .set({
-        'uid': credential.user!.uid,
-        'name': name,
-        'email': email,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'uid': credential.user!.uid,
+            'name': name,
+            'email': email,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       await credential.user!.updateDisplayName(name);
 
       if (!mounted) return;
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const LocationScreen()),
       );

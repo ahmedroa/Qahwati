@@ -7,6 +7,7 @@ import 'package:qahwati/core/helpers/spacing.dart';
 import 'package:qahwati/core/theme/text_style.dart';
 import 'package:qahwati/registr.dart';
 import 'package:qahwati/screens/location_screen.dart';
+import 'package:qahwati/screens/privacy_policy_screen.dart';
 import 'package:qahwati/widget/app_text_form_field.dart';
 import 'package:qahwati/widget/main_button.dart';
 
@@ -37,84 +38,94 @@ class _LoginState extends State<Login> {
       body: Directionality(
         textDirection: TextDirection.rtl,
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                verticalSpace(28),
-                Center(child: SvgPicture.asset('img/logo.svg', height: 72.h)),
-                verticalSpace(32),
-                _buildLabeledField(
-                  'البريد الإلكتروني أو الهاتف',
-                  hintText: 'أدخل البريد أو رقم الهاتف',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: ColorsManager.gray,
-                    size: 18.sp,
-                  ),
-                ),
-                verticalSpace(14),
-                _buildLabeledField(
-                  'كلمة المرور',
-                  hintText: 'أدخل كلمة المرور',
-                  controller: _passwordController,
-                  isObscure: _obscurePassword,
-                  prefixIcon: Icon(
-                    Icons.lock_outline_rounded,
-                    color: ColorsManager.gray,
-                    size: 18.sp,
-                  ),
-                  suffixIcon: GestureDetector(
-                    onTap: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                    child: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: ColorsManager.gray,
-                      size: 18.sp,
-                    ),
-                  ),
-                ),
-                verticalSpace(10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Text(
-                      'نسيت كلمة المرور؟',
-                      style: TextStyles(context).font12GraykRegular.copyWith(
-                            color: ColorsManager.coffeeButton,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      verticalSpace(28),
+                      Center(
+                        child: SvgPicture.asset('img/logo.svg', height: 72.h),
+                      ),
+                      verticalSpace(32),
+                      _buildLabeledField(
+                        'البريد الإلكتروني أو الهاتف',
+                        hintText: 'أدخل البريد أو رقم الهاتف',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: ColorsManager.gray,
+                          size: 18.sp,
+                        ),
+                      ),
+                      verticalSpace(14),
+                      _buildLabeledField(
+                        'كلمة المرور',
+                        hintText: 'أدخل كلمة المرور',
+                        controller: _passwordController,
+                        isObscure: _obscurePassword,
+                        prefixIcon: Icon(
+                          Icons.lock_outline_rounded,
+                          color: ColorsManager.gray,
+                          size: 18.sp,
+                        ),
+                        suffixIcon: GestureDetector(
+                          onTap: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
                           ),
-                    ),
+                          child: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: ColorsManager.gray,
+                            size: 18.sp,
+                          ),
+                        ),
+                      ),
+                      verticalSpace(10),
+                      // Align(
+                      //   alignment: Alignment.centerLeft,
+                      //   child: GestureDetector(
+                      //     onTap: () {},
+                      //     child: Text(
+                      //       'نسيت كلمة المرور؟',
+                      //       style:
+                      //           TextStyles(context).font12GraykRegular.copyWith(
+                      //                 color: ColorsManager.coffeeButton,
+                      //               ),
+                      //     ),
+                      //   ),
+                      // ),
+                      
+                      verticalSpace(32),
+                      MainButton(
+                        text: _isLoading ? '' : 'تسجيل الدخول',
+                        onTap: _isLoading ? null : _login,
+                        color: ColorsManager.coffeeButton,
+                        child: _isLoading
+                            ? SizedBox(
+                                height: 22.h,
+                                width: 22.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : null,
+                      ),
+                      verticalSpace(20),
+                      _buildDividerSection(),
+                      verticalSpace(16),
+                    ],
                   ),
                 ),
-                verticalSpace(32),
-                MainButton(
-                  text: _isLoading ? '' : 'تسجيل الدخول',
-                  onTap: _isLoading ? null : _login,
-                  color: ColorsManager.coffeeButton,
-                  child: _isLoading
-                      ? SizedBox(
-                          height: 22.h,
-                          width: 22.h,
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : null,
-                ),
-                verticalSpace(20),
-                _buildDividerSection(),
-                verticalSpace(20),
-                _buildSocialButtons(),
-                verticalSpace(32),
-              ],
-            ),
+              ),
+              _buildTermsText(),
+            ],
           ),
         ),
       ),
@@ -135,9 +146,9 @@ class _LoginState extends State<Login> {
       children: [
         Text(
           label,
-          style: TextStyles(context)
-              .font12GraykRegular
-              .copyWith(color: const Color(0xff8C503A)),
+          style: TextStyles(
+            context,
+          ).font12GraykRegular.copyWith(color: const Color(0xff8C503A)),
         ),
         verticalSpace(6),
         AppTextFormField(
@@ -166,9 +177,9 @@ class _LoginState extends State<Login> {
             },
             child: Text(
               'إنشاء حساب جديد',
-              style: TextStyles(context)
-                  .font14GrayRegular
-                  .copyWith(color: ColorsManager.coffeeButton),
+              style: TextStyles(
+                context,
+              ).font14GrayRegular.copyWith(color: ColorsManager.coffeeButton),
             ),
           ),
         ),
@@ -176,23 +187,59 @@ class _LoginState extends State<Login> {
         Row(
           children: [
             Expanded(
-              child: Divider(
-                color: ColorsManager.coffeeButton,
-                thickness: 0.2,
-              ),
+              child: Divider(color: ColorsManager.coffeeButton, thickness: 0.2),
             ),
           ],
         ),
         verticalSpace(16),
-        Center(
-          child: Text(
-            'يمكنك إستخدام',
-            style: TextStyles(context)
-                .font14GrayRegular
-                .copyWith(color: ColorsManager.coffeeButton),
-          ),
+        MainButton(
+          text: 'الدخول كزائر',
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LocationScreen()),
+            );
+          },
         ),
       ],
+    );
+  }
+
+  Widget _buildTermsText() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h, top: 8.h),
+      child: RichText(
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.rtl,
+        text: TextSpan(
+          style: TextStyles(
+            context,
+          ).font12GraykRegular.copyWith(color: ColorsManager.gray),
+          children: [
+            const TextSpan(text: 'باستخدامك التطبيق، أنت توافق على '),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PrivacyPolicyScreen(),
+                  ),
+                ),
+                child: Text(
+                  'سياسة الخصوصية',
+                  style: TextStyles(context).font12GraykRegular.copyWith(
+                    color: ColorsManager.coffeeButton,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                    decorationColor: ColorsManager.coffeeButton,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -229,8 +276,10 @@ class _LoginState extends State<Login> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       if (!mounted) return;
       Navigator.pushReplacement(
