@@ -87,6 +87,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       verticalSpace(10),
+
                       // Align(
                       //   alignment: Alignment.centerLeft,
                       //   child: GestureDetector(
@@ -100,7 +101,6 @@ class _LoginState extends State<Login> {
                       //     ),
                       //   ),
                       // ),
-                      
                       verticalSpace(32),
                       MainButton(
                         text: _isLoading ? '' : 'تسجيل الدخول',

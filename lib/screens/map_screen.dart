@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,67 +24,79 @@ class _MapScreenState extends State<MapScreen> {
 
   static const LatLng _jeddahCenter = LatLng(21.4858, 39.1925);
 
-  final List<_CoffeeShop> _coffeeShops = [
-    _CoffeeShop(
-      name: 'قهوتي مكسبي - حي الروضة',
-      address: 'شارع الأمير محمد بن عبدالعزيز، حي الروضة',
-      lat: 21.5433,
-      lng: 39.1728,
-      rating: 4.8,
-      openNow: true,
-      workingHours: '٧ص - ١٢م',
-      seatingCapacity: '٤٠ مقعد',
-      features: [
-        _Feature(icon: Icons.wifi_rounded, label: 'واي فاي مجاني'),
-        _Feature(icon: Icons.local_parking_rounded, label: 'موقف سيارات'),
-        _Feature(icon: Icons.smoke_free_rounded, label: 'خالٍ من التدخين'),
-        _Feature(icon: Icons.delivery_dining_rounded, label: 'توصيل'),
-      ],
-    ),
-    _CoffeeShop(
-      name: 'قهوتي مكسبي - حي الزهراء',
-      address: 'طريق الكورنيش، حي الزهراء',
-      lat: 21.5128,
-      lng: 39.1804,
-      rating: 4.6,
-      openNow: true,
-      workingHours: '٦ص - ١١م',
-      seatingCapacity: '٦٠ مقعد',
-      features: [
-        _Feature(icon: Icons.wifi_rounded, label: 'واي فاي مجاني'),
-        _Feature(icon: Icons.water_rounded, label: 'إطلالة بحرية'),
-        _Feature(icon: Icons.family_restroom_rounded, label: 'قسم عائلي'),
-        _Feature(icon: Icons.delivery_dining_rounded, label: 'توصيل'),
-      ],
-    ),
-    _CoffeeShop(
-      name: 'قهوتي مكسبي - حي النزهة',
-      address: 'شارع التحلية، حي النزهة',
-      lat: 21.4692,
-      lng: 39.1938,
-      rating: 4.9,
-      openNow: false,
-      workingHours: '٨ص - ١٢م',
-      seatingCapacity: '٣٠ مقعد',
-      features: [
-        _Feature(icon: Icons.wifi_rounded, label: 'واي فاي مجاني'),
-        _Feature(icon: Icons.local_parking_rounded, label: 'موقف سيارات'),
-        _Feature(icon: Icons.outdoor_grill_rounded, label: 'جلسات خارجية'),
-        _Feature(icon: Icons.card_giftcard_rounded, label: 'نقاط مضاعفة'),
-      ],
-    ),
-  ];
+  static IconData _featureIcon(String label) {
+    switch (label) {
+      case 'واي فاي مجاني':
+        return Icons.wifi_rounded;
+      case 'موقف سيارات':
+        return Icons.local_parking_rounded;
+      case 'خالٍ من التدخين':
+        return Icons.smoke_free_rounded;
+      case 'توصيل':
+        return Icons.delivery_dining_rounded;
+      case 'إطلالة بحرية':
+        return Icons.water_rounded;
+      case 'قسم عائلي':
+        return Icons.family_restroom_rounded;
+      case 'جلسات خارجية':
+        return Icons.outdoor_grill_rounded;
+      case 'نقاط مضاعفة':
+        return Icons.card_giftcard_rounded;
+      case 'خدمة ذاتية':
+        return Icons.self_improvement_rounded;
+      case 'مكيف':
+        return Icons.ac_unit_rounded;
+      default:
+        return Icons.star_rounded;
+    }
+  }
+
+  static _CoffeeShop _fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final featureLabels = List<String>.from(data['features'] as List? ?? []);
+    return _CoffeeShop(
+      id: doc.id,
+      name: data['name'] as String? ?? '',
+      address: data['address'] as String? ?? '',
+      lat: (data['lat'] as num).toDouble(),
+      lng: (data['lng'] as num).toDouble(),
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      openNow: data['openNow'] as bool? ?? false,
+      workingHours: data['workingHours'] as String? ?? '',
+      seatingCapacity: '${data['seatingCapacity']} مقعد',
+      priceRange: data['priceRange'] as String? ?? '',
+      roadType: data['roadType'] as String? ?? '',
+      buildingType: data['buildingType'] as String? ?? '',
+      features: featureLabels
+          .map((label) => _Feature(icon: _featureIcon(label), label: label))
+          .toList(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorsManager.screenBackground,
       appBar: _buildAppBar(context),
-      body: Stack(
-        children: [
-          _buildMap(),
-          if (_selectedLocation != null) _buildSelectedCard(context),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('places')
+            .orderBy('createdAt')
+            .snapshots(),
+        builder: (context, snapshot) {
+          final shops = snapshot.hasData
+              ? snapshot.data!.docs.map(_fromFirestore).toList()
+              : <_CoffeeShop>[];
+
+          return Stack(
+            children: [
+              _buildMap(shops),
+              if (snapshot.connectionState == ConnectionState.waiting && shops.isEmpty)
+                const Center(child: CircularProgressIndicator()),
+              if (_selectedLocation != null) _buildSelectedCard(context, shops),
+            ],
+          );
+        },
       ),
     );
   }
@@ -100,7 +113,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildMap() {
+  Widget _buildMap(List<_CoffeeShop> shops) {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
@@ -117,7 +130,7 @@ class _MapScreenState extends State<MapScreen> {
           userAgentPackageName: 'com.qahwati.app',
         ),
         MarkerLayer(
-          markers: _coffeeShops.map((shop) {
+          markers: shops.map((shop) {
             final pos = LatLng(shop.lat, shop.lng);
             return Marker(
               point: pos,
@@ -174,7 +187,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildSelectedCard(BuildContext context) {
+  Widget _buildSelectedCard(BuildContext context, List<_CoffeeShop> shops) {
     final shop = _selectedShop;
     return Positioned(
       bottom: 0,
@@ -217,56 +230,33 @@ class _MapScreenState extends State<MapScreen> {
                       ],
                     ),
                   ),
-                  if (shop != null)
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: shop.openNow
-                            ? ColorsManager.green.withValues(alpha: 0.15)
-                            : ColorsManager.red.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        shop.openNow ? 'مفتوح الآن' : 'مغلق',
-                        style: TextStyles(context).font12GraykRegular.copyWith(
-                              color: shop.openNow ? ColorsManager.green : ColorsManager.red,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
                 ],
               ),
               if (shop != null) ...[
                 verticalSpace(10),
                 Row(
                   children: [
-                    Icon(Icons.star_rounded, color: const Color(0xFFFFB800), size: 15.sp),
+                    Icon(Icons.attach_money_rounded, color: ColorsManager.gray, size: 14.sp),
                     horizontalSpace(3),
-                    Text(shop.rating.toString(), style: TextStyles(context).font12GraykRegular.copyWith(color: ColorsManager.dark)),
-                    horizontalSpace(14),
-                    Icon(Icons.access_time_rounded, color: ColorsManager.gray, size: 14.sp),
+                    Expanded(
+                      child: Text(shop.priceRange,
+                          style: TextStyles(context).font12GraykRegular,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    horizontalSpace(10),
+                    Icon(Icons.directions_rounded, color: ColorsManager.gray, size: 14.sp),
                     horizontalSpace(3),
-                    Text(shop.workingHours, style: TextStyles(context).font12GraykRegular),
-                    horizontalSpace(14),
-                    Icon(Icons.chair_rounded, color: ColorsManager.gray, size: 14.sp),
+                    Text(shop.roadType, style: TextStyles(context).font12GraykRegular),
+                    horizontalSpace(10),
+                    Icon(Icons.apartment_rounded, color: ColorsManager.gray, size: 14.sp),
                     horizontalSpace(3),
-                    Text(shop.seatingCapacity, style: TextStyles(context).font12GraykRegular),
+                    Text(shop.buildingType, style: TextStyles(context).font12GraykRegular),
                   ],
-                ),
-                verticalSpace(12),
-                Divider(height: 1, color: ColorsManager.grayBorder.withValues(alpha: 0.5)),
-                verticalSpace(10),
-                Text('مميزات المكان', style: TextStyles(context).font14BlackRegular.copyWith(fontWeight: FontWeight.w700)),
-                verticalSpace(8),
-                Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
-                  children: shop.features.map((f) => _buildFeatureChip(context, f)).toList(),
                 ),
               ],
               verticalSpace(14),
               MainButton(
-                text: 'تأكيد الموقع',
+                text: 'فتح على الخريطة',
                 height: 48,
                 onTap: () => Navigator.pop(context),
               ),
@@ -277,26 +267,10 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildFeatureChip(BuildContext context, _Feature feature) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: ColorsManager.coffeeButton.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(feature.icon, size: 14.sp, color: ColorsManager.coffeeButton),
-          horizontalSpace(5),
-          Text(feature.label, style: TextStyles(context).font12GraykRegular.copyWith(color: ColorsManager.dark)),
-        ],
-      ),
-    );
-  }
 }
 
 class _CoffeeShop {
+  final String id;
   final String name;
   final String address;
   final double lat;
@@ -305,9 +279,13 @@ class _CoffeeShop {
   final bool openNow;
   final String workingHours;
   final String seatingCapacity;
+  final String priceRange;
+  final String roadType;
+  final String buildingType;
   final List<_Feature> features;
 
   const _CoffeeShop({
+    required this.id,
     required this.name,
     required this.address,
     required this.lat,
@@ -316,6 +294,9 @@ class _CoffeeShop {
     required this.openNow,
     required this.workingHours,
     required this.seatingCapacity,
+    required this.priceRange,
+    required this.roadType,
+    required this.buildingType,
     required this.features,
   });
 }

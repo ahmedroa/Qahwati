@@ -24,7 +24,9 @@ class MyApp extends StatelessWidget {
         title: 'قهوتي',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: ColorsManager.coffeeButton),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: ColorsManager.coffeeButton,
+          ),
           scaffoldBackgroundColor: ColorsManager.screenBackground,
           appBarTheme: const AppBarTheme(
             backgroundColor: ColorsManager.screenBackground,
